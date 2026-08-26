@@ -1,7 +1,7 @@
-from src.data_loader import load_all_documents
-from src.vectorstore import FaissVectorStore
-from src.search import RAGSearch
-from src.embedding import EmbeddingPipeline
+from app.services.data_loader import load_all_documents
+from app.services.vectorstore import FaissVectorStore
+from app.services.search import RAGSearch
+from app.services.embedding import EmbeddingPipeline
 
 # Example usage
 if __name__ == "__main__":
