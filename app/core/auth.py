@@ -17,18 +17,19 @@ def get_jwks():
     return _jwks_cache
 
 def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
-    token = credentials.credentials
+    payload = _decode(credentials.credentials)
+    sub = payload.get("sub")
+    if not isinstance(sub, str):
+        raise HTTPException(status_code=401, detail="Invalid token: no user id")
+    return sub
+
+def get_current_token(credentials: HTTPAuthorizationCredentials = Depends(security)) -> str:
+    _decode(credentials.credentials)  
+    return credentials.credentials
+
+def _decode(token: str) -> dict:
     try:
         jwks = get_jwks()
-        payload = jwt.decode(
-            token,
-            jwks,
-            algorithms=["ES256"],
-            audience="authenticated",
-        )
-        sub = payload.get("sub")
-        if not isinstance(sub, str):
-            raise HTTPException(status_code=401, detail="Invalid token: no user id")
-        return sub
+        return jwt.decode(token, jwks, algorithms=["ES256"], audience="authenticated")
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid or expired token")

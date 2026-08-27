@@ -1,7 +1,10 @@
 from fastapi import FastAPI, Depends
 from app.core.auth import get_current_user
+from app.api.routes_upload import router as upload_router
 
 app = FastAPI(title="BrainDrop")
+
+app.include_router(upload_router)
 
 @app.get("/")
 def root():
