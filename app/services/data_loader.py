@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from typing import List, Any
 from langchain_community.document_loaders import PyMuPDFLoader, TextLoader, CSVLoader
@@ -86,7 +87,7 @@ def load_all_documents(data_dir: str) -> List[Any]:
     for json_file in json_files:
         print(f"[DEBUG] Loading JSON: {json_file}")
         try:
-            loader = JSONLoader(str(json_file))
+            loader = JSONLoader(str(json_file), jq_schema='.')
             loaded = loader.load()
             print(f"[DEBUG] Loaded {len(loaded)} JSON docs from {json_file}")
             documents.extend(loaded)
@@ -95,3 +96,39 @@ def load_all_documents(data_dir: str) -> List[Any]:
 
     print(f"[DEBUG] Total loaded documents: {len(documents)}")
     return documents
+
+import tempfile
+
+def load_single_document(filename: str, content: bytes) -> List[Any]:
+    """Load one uploaded file (given as bytes) using the right loader based on extension."""
+    suffix = Path(filename).suffix.lower()
+    loader_map = {
+        ".pdf": PyMuPDFLoader,
+        ".txt": TextLoader,
+        ".csv": CSVLoader,
+        ".docx": Docx2txtLoader,
+        ".xlsx": UnstructuredExcelLoader,
+    }
+
+    if suffix == ".json":
+        with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+            tmp.write(content)
+            tmp_path = tmp.name
+        loader = JSONLoader(tmp_path, jq_schema='.')
+        docs = loader.load()
+        os.unlink(tmp_path)
+        return docs
+
+    loader_cls = loader_map.get(suffix)
+    if loader_cls is None:
+        raise ValueError(f"Unsupported file type: {suffix}")
+
+    with tempfile.NamedTemporaryFile(suffix=suffix, delete=False) as tmp:
+        tmp.write(content)
+        tmp_path = tmp.name
+    try:
+        loader = loader_cls(tmp_path)
+        docs = loader.load()
+    finally:
+        os.unlink(tmp_path)
+    return docs
