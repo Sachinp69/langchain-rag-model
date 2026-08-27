@@ -42,28 +42,22 @@ class RAGSearch:
         print(f"[INFO] Groq LLM initialized: {llm_model}")
 
     def search_and_summarize(self, query: str, top_k: int = 5) -> str:
-        
+
         results = self.vectorstore.query(query, top_k=top_k)
         texts = [r["metadata"].get("text", "") for r in results if r["metadata"]]
         context = "\n\n".join(texts)
-        
+
         if not context:
             return "No relevant documents found."
-        
+
         prompt = f"""Summarize the following context for the query: '{query}'\n\nContext:\n{context}\n\nSummary:"""
         response = self.llm.invoke([prompt])
-        
+
         if isinstance(response.content, str):
             return response.content
         elif isinstance(response.content, list):
             return "".join(
-            part if isinstance(part, str) else part.get("text", "") 
+            part if isinstance(part, str) else part.get("text", "")
             for part in response.content
         )
         return str(response.content)
-
-if __name__ == "__main__":
-    rag_search = RAGSearch()
-    query = "What is attention mechanism?"
-    summary = rag_search.search_and_summarize(query, top_k=3)
-    print("Summary:", summary)

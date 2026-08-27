@@ -5,7 +5,7 @@ from supabase import create_client, Client
 load_dotenv()
 
 url = os.environ.get("SUPABASE_URL")
-key = os.environ.get("SUPABASE_PUBLISHABLE_KEY")
+key = os.environ.get("SUPABASE_KEY")
 
 if not url or not key:
     raise ValueError("Missing SUPABASE_URL or SUPABASE_KEY in environment")

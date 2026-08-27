@@ -15,5 +15,8 @@ wheels/
 .env
 
 # folders
-agentic-rag/
-src/
+faiss_store
+notebooks
+
+# files
+test.txt
