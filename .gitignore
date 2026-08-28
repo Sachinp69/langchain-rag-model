@@ -15,7 +15,6 @@ wheels/
 .env
 
 # folders
-faiss_store
 notebooks
 
 # files
