@@ -43,3 +43,43 @@ async def upload_file(
         raise HTTPException(status_code=400, detail=f"ingestion: {str(e)}")
 
     return {"filename": file.filename, "storage_path": storage_path}
+
+@router.get("/files")
+async def list_files(
+    user_id: str = Depends(get_current_user),
+    token: str = Depends(get_current_token),
+):
+    supabase = get_user_supabase_client(token)
+    result = supabase.table("files").select("id, filename, storage_path, created_at").execute()
+    return {"files": result.data}
+
+
+@router.delete("/files/{file_id}")
+async def delete_file(
+    file_id: str,
+    # only need user_id variable for auth validation return value not used
+    user_id: str = Depends(get_current_user),
+    token: str = Depends(get_current_token),
+):
+    supabase = get_user_supabase_client(token)
+
+    # fetch the file row first, to get its storage_path
+    result = supabase.table("files").select("storage_path").eq("id", file_id).execute()
+    if not result.data:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    row = cast(Dict[str, Any], result.data[0])
+    storage_path = row["storage_path"]
+    # delete from storage
+    try:
+        supabase.storage.from_("userfiles").remove([storage_path])
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"storage delete: {str(e)}")
+
+    # delete from files table (document_chunks cascade-deletes via file_id FK)
+    try:
+        supabase.table("files").delete().eq("id", file_id).execute()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"table delete: {str(e)}")
+
+    return {"deleted": file_id}
