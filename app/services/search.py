@@ -7,11 +7,11 @@ from app.services.pgvector_store import PgVectorStore
 load_dotenv()
 
 class RAGSearch:
-    def __init__(self, supabase_client, embedding_model: str = "all-MiniLM-L6-v2", llm_model: str = "openai/gpt-oss-20b"):
-        self.model = SentenceTransformer(embedding_model)
+    def __init__(self, supabase_client, embedding_model, llm):
+        self.model = embedding_model
         self.store = PgVectorStore(supabase_client)
-        self.llm = ChatGroq(model=llm_model)
-        print(f"[INFO] Groq LLM initialized: {llm_model}")
+        self.llm = llm
+        print(f"[INFO] Groq LLM initialized: {llm}")
 
     def search_and_summarize(self, query: str, top_k: int = 5) -> str:
         query_emb = self.model.encode([query]).astype('float32')

@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
+
 from pydantic import BaseModel
 from app.core.auth import get_current_user, get_current_token
 from app.core.supabase_client import get_user_supabase_client
@@ -12,16 +13,17 @@ class QueryRequest(BaseModel):
 
 @router.post("/query")
 async def query_documents(
-    request: QueryRequest,
+    request_body: QueryRequest,
+    request: Request,
     user_id: str = Depends(get_current_user),
     token: str = Depends(get_current_token),
 ):
     supabase = get_user_supabase_client(token)
+    rag = RAGSearch(supabase, request.app.state.embedding_model, request.app.state.llm)
 
     try:
-        rag = RAGSearch(supabase)
-        answer = rag.search_and_summarize(request.query, top_k=request.top_k)
+        answer = rag.search_and_summarize(request_body.query, top_k=request_body.top_k)
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"query: {str(e)}")
 
-    return {"query": request.query, "answer": answer}
+    return {"query": request_body.query, "answer": answer}

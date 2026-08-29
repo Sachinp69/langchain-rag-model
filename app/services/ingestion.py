@@ -2,6 +2,8 @@ import numpy as np
 from app.services.data_loader import load_single_document
 from app.services.embedding import EmbeddingPipeline
 from app.services.pgvector_store import PgVectorStore
+from sentence_transformers import SentenceTransformer
+
 
 def ingest_file(
     content: bytes,
@@ -9,7 +11,7 @@ def ingest_file(
     user_id: str,
     file_id: str,
     supabase_client,
-    embedding_model: str = "all-MiniLM-L6-v2",
+    embedding_model : SentenceTransformer,
     chunk_size: int = 1000,
     chunk_overlap: int = 200,
 ):
